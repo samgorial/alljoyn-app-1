@@ -1,151 +1,122 @@
 package com.covisint.platform.device.pi;
 
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import org.alljoyn.bus.BusAttachment;
 import org.alljoyn.bus.BusException;
-import org.alljoyn.bus.BusListener;
-import org.alljoyn.bus.Mutable;
-import org.alljoyn.bus.ProxyBusObject;
-import org.alljoyn.bus.SessionListener;
-import org.alljoyn.bus.SessionOpts;
-import org.alljoyn.bus.Status;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.covisint.platform.device.pi.jni.Led;
+import com.covisint.platform.device.pi.jni.Buzzer;
+import com.covisint.platform.device.pi.jni.StatusLight;
 
 @Component("bus")
 public class BusService implements PiBusInterface, InitializingBean {
 
+	private static Executor executor = Executors.newFixedThreadPool(10);
+	
 	@Autowired
 	private InternalState state;
 
-	private static Executor executor = Executors.newSingleThreadExecutor();
+	private Timer timer = new Timer();
+	
+	private static boolean cooldownPhase;
+	
+	private TimerTask raiseTemperature = new TimerTask() {
+		
+		@Override
+		public void run() {
+			
+			for(;;) {
 
-	private static BusAttachment mBus;
-	private static ProxyBusObject mProxyObj;
-	private static PiBusInterface mRemoteInterface;
-	private static boolean isJoined = false;
+				try {
+					System.out.println("Timer task sleeping for 5 seconds...");
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 
-	static class MyBusListener extends BusListener {
-		public void foundAdvertisedName(String name, short transport, String namePrefix) {
-			System.out
-					.println(String.format("BusListener.foundAdvertisedName(%s, %d, %s)", name, transport, namePrefix));
-			short contactPort = Application.CONTACT_PORT;
-			SessionOpts sessionOpts = new SessionOpts();
-			sessionOpts.traffic = SessionOpts.TRAFFIC_MESSAGES;
-			sessionOpts.isMultipoint = false;
-			sessionOpts.proximity = SessionOpts.PROXIMITY_ANY;
-			sessionOpts.transports = SessionOpts.TRANSPORT_ANY;
+				if(cooldownPhase) {
+					System.out.println("In cooldown phase.  Timer task not operational.");
+					continue;
+				}
 
-			Mutable.IntegerValue sessionId = new Mutable.IntegerValue();
-
-			mBus.enableConcurrentCallbacks();
-
-			Status status = mBus.joinSession(name, contactPort, sessionId, sessionOpts, new SessionListener());
-			if (status != Status.OK) {
-				return;
+				if(state.temperature < 100) {
+					System.out.println("Temp < 100, increasing by 1...");
+					state.temperature += 1;
+				} else {
+					System.out.println("Max temp reached, not increasing.");
+				}
+				
+				updateStatusLight();
+				
 			}
-			System.out.println(String.format("BusAttachement.joinSession successful sessionId = %d", sessionId.value));
-
-			mProxyObj = mBus.getProxyBusObject("com.covisint.platform.device.smartfan", "/", sessionId.value,
-					new Class<?>[] { PiBusInterface.class });
-
-			mRemoteInterface = mProxyObj.getInterface(PiBusInterface.class);
-			isJoined = true;
-
+			
 		}
-
-		public void nameOwnerChanged(String busName, String previousOwner, String newOwner) {
-			if ("com.covisint.platform.device.smartfan".equals(busName)) {
-				System.out
-						.println("BusAttachement.nameOwnerChagned(" + busName + ", " + previousOwner + ", " + newOwner);
-			}
-		}
-
-	}
-
-	protected boolean playTag() {
-		return true;
-	}
-
+	};
+	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (playTag()) {
-			initGame();
-		}
+		System.out.println("Scheduling raise temp timer task");
+		timer.schedule(raiseTemperature, 0);
+		updateStatusLight();
+		System.out.println("Completed BusService initialization");
 	}
-
-	private void initGame() {
-
-		executor.execute(new Runnable() {
-
-			@Override
-			public void run() {
-
-				mBus = new BusAttachment(Application.APP_NAME, BusAttachment.RemoteMessage.Receive);
-
-				BusListener listener = new MyBusListener();
-				mBus.registerBusListener(listener);
-
-				Status status = mBus.connect();
-				if (status != Status.OK) {
-					return;
-				}
-
-				System.out.println(
-						"BusAttachment.connect successful on " + System.getProperty("org.alljoyn.bus.address"));
-
-				status = mBus.findAdvertisedName("com.covisint.platform.device.smartfan");
-				if (status != Status.OK) {
-					return;
-				}
-				System.out.println(
-						"BusAttachment.findAdvertisedName successful " + "com.covisint.platform.device.smartfan");
-
-				while (!isJoined) {
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						System.out.println("Program interupted");
-					}
-				}
-
-				System.out.println("Joined game!");
-
-				tagSomeoneElse(); // Start the game.
-
+	
+	private void updateStatusLight() {
+		StatusLight light = new StatusLight();
+		InternalState.RGB newColor;
+		switch((int)state.temperature) {
+		case 100:
+		case 99:
+		case 98:
+		case 97:
+			newColor = new InternalState.RGB(0, 255, 255);
+			break;
+		case 96:
+		case 95:
+		case 94:
+		case 93:
+			newColor = new InternalState.RGB(0, 210, 255);
+			break;
+		case 92:
+		case 91:
+		case 90:
+		case 89:
+			newColor = new InternalState.RGB(0, 85, 255);
+			break;
+		case 88:
+		case 87:
+		case 86:
+		case 85:
+			newColor = new InternalState.RGB(0, 50, 255);
+			break;
+		case 84:
+		case 83:
+		case 82:
+		case 81:
+		case 80:
+			newColor = new InternalState.RGB(0, 0, 255);
+			break;
+			default:
+				newColor = new InternalState.RGB(255, 0, 255);
+		}
+		
+		if(!state.ledColor.toString().equals(newColor.toString())) {
+			try {
+				System.out.println("Led color changing from " + state.ledColor + " to " + newColor);
+				ledColorChanged();
+			} catch (BusException e) {
+				e.printStackTrace();
 			}
-
-		});
-
-	}
-
-	private void tagSomeoneElse() {
-		Random rand = new Random(System.currentTimeMillis());
-
-		try {
-			Thread.sleep(rand.nextInt(5000) + 1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 
-		// Tag someone else!
-		try {
-			System.out.println("About to call remote#turnOnLight");
-			mRemoteInterface.turnOnLight();
-			System.out.println("Successfully called remote#turnOnLight");
-			turnOffLight();
-		} catch (BusException e) {
-			e.printStackTrace();
-		}
-
+		System.out.println("Changing led color (on device) to " + newColor.r + ", " + newColor.g + ", " + newColor.b);
+		
+		light.setColor(newColor.r, newColor.g, newColor.b);
 	}
 
 	@Override
@@ -164,13 +135,9 @@ public class BusService implements PiBusInterface, InitializingBean {
 	}
 
 	@Override
-	public void lightTurnedOn() throws BusException {
-		System.out.println("Light turned on");
-	}
-
-	@Override
-	public void lightTurnedOff() throws BusException {
-		System.out.println("Light turned off");
+	public String ledColorChanged() throws BusException {
+		System.out.println("Led color changed: " + state.ledColor.toString());
+		return state.ledColor.toString();
 	}
 
 	@Override
@@ -186,9 +153,9 @@ public class BusService implements PiBusInterface, InitializingBean {
 	}
 
 	@Override
-	public int getLedState() throws BusException {
-		System.out.println("LED state was queried: " + state.ledLit);
-		return state.ledLit ? 1 : 0;
+	public String getLedColor() throws BusException {
+		System.out.println("LED state was queried: " + state.ledColor);
+		return state.ledColor.toString();
 	}
 
 	@Override
@@ -200,6 +167,32 @@ public class BusService implements PiBusInterface, InitializingBean {
 	@Override
 	public void setTargetTemp(double targetTemp) throws BusException {
 		System.out.println("Setting target temp to " + targetTemp);
+		
+		if(targetTemp < state.temperature) {
+			
+			cooldownPhase = true;
+			
+			turnOnBuzzer();
+			
+			while(targetTemp < state.temperature) {
+				
+				state.temperature -= 1;
+				
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				updateStatusLight();
+				
+			}
+			
+			turnOffBuzzer();
+			
+			cooldownPhase = false;
+		}
+		
 		state.temperature = targetTemp;
 		internalTempChanged(targetTemp);
 	}
@@ -207,41 +200,27 @@ public class BusService implements PiBusInterface, InitializingBean {
 	@Override
 	public void turnOffBuzzer() throws BusException {
 		System.out.println("Turning off buzzer.");
+		new Buzzer().off();
+		System.out.println("Turned off (physical) buzzer.");
 		state.buzzerOn = false;
 		buzzerTurnedOff();
 	}
 
 	@Override
-	public void turnOffLight() throws BusException {
-		System.out.println("Turning off light.");
-		new Led().off();
-		state.ledLit = false;
-		lightTurnedOff();
-	}
-
-	@Override
 	public void turnOnBuzzer() throws BusException {
 		System.out.println("Turning on buzzer.");
+
+		executor.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				new Buzzer().on();
+			}
+		});
+
+		System.out.println("Turned on (physical) buzzer.");
 		state.buzzerOn = true;
 		buzzerTurnedOn();
-	}
-
-	Timer timer = new Timer();
-
-	@Override
-	public void turnOnLight() throws BusException {
-		System.out.println("Turning on light.");
-		new Led().on();
-		state.ledLit = true;
-		lightTurnedOn();
-
-//		timer.schedule(new TimerTask() {
-//
-//			@Override
-//			public void run() {
-//				tagSomeoneElse();
-//			}
-//		}, new Random(System.currentTimeMillis()).nextInt(4000) + 1000);
 	}
 
 }
