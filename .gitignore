@@ -1,0 +1,3 @@
+/target/
+*/target/**
+jni/liballjoyn_java.so
