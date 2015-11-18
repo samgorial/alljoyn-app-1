@@ -1,12 +1,12 @@
-package com.covisint.platform.device.pi;
+package com.covisint.platform.device.demo;
 
-import static com.covisint.platform.device.pi.Constants.DESCRIPTION;
-import static com.covisint.platform.device.pi.Constants.DEVICE_ID;
-import static com.covisint.platform.device.pi.Constants.DEVICE_NAME;
-import static com.covisint.platform.device.pi.Constants.FIRMWARE_VERSION;
-import static com.covisint.platform.device.pi.Constants.MANUFACTURER;
-import static com.covisint.platform.device.pi.Constants.MODEL_NUMBER;
-import static com.covisint.platform.device.pi.Constants.SERIAL_NUMBER;
+import static com.covisint.platform.device.demo.Constants.DESCRIPTION;
+import static com.covisint.platform.device.demo.Constants.DEVICE_ID;
+import static com.covisint.platform.device.demo.Constants.DEVICE_NAME;
+import static com.covisint.platform.device.demo.Constants.FIRMWARE_VERSION;
+import static com.covisint.platform.device.demo.Constants.MANUFACTURER;
+import static com.covisint.platform.device.demo.Constants.MODEL_NUMBER;
+import static com.covisint.platform.device.demo.Constants.SERIAL_NUMBER;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.covisint.platform.device.pi;
+package com.covisint.platform.device.demo;
 
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package com.covisint.platform.device.pi;
+package com.covisint.platform.device.demo;
 
 import org.alljoyn.bus.BusException;
 import org.alljoyn.bus.BusObject;
@@ -7,8 +7,8 @@ import org.alljoyn.bus.annotation.BusMethod;
 import org.alljoyn.bus.annotation.BusProperty;
 import org.alljoyn.bus.annotation.BusSignal;
 
-@BusInterface(name = "com.covisint.platform.devices.nest", announced = "true")
-public interface PiBusInterface extends BusObject {
+@BusInterface(announced = "true")
+public interface DemoInterface extends BusObject {
 
 	@BusProperty
 	double getInternalTemp() throws BusException;
@@ -18,9 +18,6 @@ public interface PiBusInterface extends BusObject {
 
 	@BusProperty
 	String getLedColor() throws BusException;
-
-	@BusMethod
-	String ping(String text) throws BusException;
 
 	@BusMethod
 	void setTargetTemp(double targetTemp) throws BusException;
@@ -36,11 +33,5 @@ public interface PiBusInterface extends BusObject {
 
 	@BusSignal
 	String ledColorChanged() throws BusException;
-
-	@BusSignal
-	void buzzerTurnedOn() throws BusException;
-
-	@BusSignal
-	void buzzerTurnedOff() throws BusException;
 
 }

@@ -4,11 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.covisint.platform.devices</groupId>
-	<artifactId>aj-nest</artifactId>
+	<artifactId>aj-demo</artifactId>
 	<version>1-SNAPSHOT</version>
 
-	<name>AllJoyn Nest Application</name>
-	<description>AllJoyn Nest Application</description>
+	<name>AllJoyn Demo Application</name>
+	<description>AllJoyn Demo Application</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
