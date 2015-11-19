@@ -1,10 +1,18 @@
 package com.covisint.platform.device.demo;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.alljoyn.bus.AboutDataListener;
 import org.alljoyn.bus.AboutObj;
 import org.alljoyn.bus.BusAttachment;
+import org.alljoyn.bus.BusListener;
 import org.alljoyn.bus.Mutable;
 import org.alljoyn.bus.SessionOpts;
 import org.alljoyn.bus.SessionPortListener;
+import org.alljoyn.bus.SignalEmitter;
 import org.alljoyn.bus.Status;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +28,15 @@ public class Application implements InitializingBean {
 
 	public static final String APP_NAME = "Demo_AJ_Application";
 
-	public static final short CONTACT_PORT = 42;
+	public static final short CONTACT_PORT = 52;
 
 	@Autowired
 	private DemoInterface service;
+
+	@Autowired
+	private AboutDataListener aboutDataListener;
+
+	public static final Map<DemoInterface, List<SignalEmitter>> SIGNAL_EMITTERS = new IdentityHashMap<>();
 
 	public void afterPropertiesSet() throws Exception {
 		doAboutAnnouncement();
@@ -39,6 +52,8 @@ public class Application implements InitializingBean {
 			System.err.println("Could not register bus object: " + status.toString());
 			return;
 		}
+
+		bus.registerBusListener(new BusListener());
 
 		status = bus.connect();
 
@@ -71,6 +86,21 @@ public class Application implements InitializingBean {
 			public void sessionJoined(short sessionPort, int id, String joiner) {
 				System.out.println(
 						String.format("SessionPortListener.sessionJoined(%d, %d, %s)", sessionPort, id, joiner));
+
+				SignalEmitter emitter = new SignalEmitter(service, joiner, id, SignalEmitter.GlobalBroadcast.On);
+
+				System.out.println("Joiner " + joiner + " joined session " + id + " on port " + sessionPort
+						+ ".  Bound signal emitter to this application's service.");
+
+				List<SignalEmitter> emitters = SIGNAL_EMITTERS.get(service);
+
+				if (emitters == null) {
+					emitters = new ArrayList<>();
+					SIGNAL_EMITTERS.put(service, emitters);
+				}
+
+				emitters.add(emitter);
+
 			}
 		});
 
@@ -80,7 +110,7 @@ public class Application implements InitializingBean {
 		}
 
 		AboutObj aboutObj = new AboutObj(bus);
-		status = aboutObj.announce(contactPort.value, new AboutData());
+		status = aboutObj.announce(contactPort.value, aboutDataListener);
 
 		if (status != Status.OK) {
 			System.out.println("Announce failed " + status.toString());

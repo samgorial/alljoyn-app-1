@@ -15,10 +15,11 @@ import org.alljoyn.bus.AboutDataListener;
 import org.alljoyn.bus.ErrorReplyBusException;
 import org.alljoyn.bus.Variant;
 import org.alljoyn.bus.Version;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AboutData implements AboutDataListener {
 
-	@Override
 	public Map<String, Variant> getAboutData(String language) throws ErrorReplyBusException {
 		System.out.println("MyAboutData.getAboutData was called for `" + language + "` language.");
 		Map<String, Variant> aboutData = new HashMap<String, Variant>();
@@ -38,7 +39,6 @@ public class AboutData implements AboutDataListener {
 		return aboutData;
 	}
 
-	@Override
 	public Map<String, Variant> getAnnouncedAboutData() throws ErrorReplyBusException {
 		System.out.println("MyAboutData.getAnnouncedAboutData was called.");
 		Map<String, Variant> aboutData = new HashMap<String, Variant>();

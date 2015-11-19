@@ -32,6 +32,6 @@ public interface DemoInterface extends BusObject {
 	void internalTempChanged(double temp) throws BusException;
 
 	@BusSignal
-	String ledColorChanged() throws BusException;
+	String ledColorChanged(String newColor) throws BusException;
 
 }
