@@ -10,11 +10,6 @@ public class DemoSignalHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DemoSignalHandler.class);
 
-	public static final DemoSignalHandler INSTANCE = new DemoSignalHandler();
-
-	private DemoSignalHandler() {
-	}
-
 	@BusSignalHandler(iface = "com.covisint.platform.device.demo.DemoInterface", signal = "internalTempChanged")
 	public void internalTempChanged(double temp) {
 		LOG.info("Remote Pi: internal temperature changed to {}", temp);

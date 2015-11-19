@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.alljoyn.bus.AboutDataListener;
 import org.alljoyn.bus.AboutObj;
@@ -38,13 +40,27 @@ public class Application implements InitializingBean {
 
 	public static final Map<DemoInterface, List<SignalEmitter>> SIGNAL_EMITTERS = new IdentityHashMap<>();
 
+	private static BusAttachment bus;
+	
+	private static AboutObj aboutObj;
+	
+	ExecutorService executor = Executors.newSingleThreadExecutor();
+	
 	public void afterPropertiesSet() throws Exception {
-		doAboutAnnouncement();
+		executor.submit(new Runnable() {
+			
+			public void run() {
+				doAboutAnnouncement();
+			}
+			
+		});
+		
+		System.out.println("Leaving after properties set.");
 	}
 
 	private void doAboutAnnouncement() {
 
-		BusAttachment bus = new BusAttachment(APP_NAME, BusAttachment.RemoteMessage.Receive);
+		bus = new BusAttachment(APP_NAME, BusAttachment.RemoteMessage.Receive);
 
 		Status status = bus.registerBusObject(service, "/demo/1");
 
@@ -66,13 +82,13 @@ public class Application implements InitializingBean {
 
 		Mutable.ShortValue contactPort = new Mutable.ShortValue(CONTACT_PORT);
 
-		SessionOpts sessionOpts = new SessionOpts();
-		sessionOpts.traffic = SessionOpts.TRAFFIC_MESSAGES;
-		sessionOpts.isMultipoint = false;
-		sessionOpts.proximity = SessionOpts.PROXIMITY_ANY;
-		sessionOpts.transports = SessionOpts.TRANSPORT_ANY;
+		SessionOpts opts = new SessionOpts();
+		opts.traffic = SessionOpts.TRAFFIC_MESSAGES;
+		opts.isMultipoint = false;
+		opts.proximity = SessionOpts.PROXIMITY_ANY;
+		opts.transports = SessionOpts.TRANSPORT_ANY;
 
-		status = bus.bindSessionPort(contactPort, sessionOpts, new SessionPortListener() {
+		status = bus.bindSessionPort(contactPort, opts, new SessionPortListener() {
 
 			public boolean acceptSessionJoiner(short sessionPort, String joiner, SessionOpts sessionOpts) {
 				System.out.println("SessionPortListener.acceptSessionJoiner called");
@@ -84,8 +100,6 @@ public class Application implements InitializingBean {
 			}
 
 			public void sessionJoined(short sessionPort, int id, String joiner) {
-				System.out.println(
-						String.format("SessionPortListener.sessionJoined(%d, %d, %s)", sessionPort, id, joiner));
 
 				SignalEmitter emitter = new SignalEmitter(service, joiner, id, SignalEmitter.GlobalBroadcast.On);
 
@@ -109,25 +123,30 @@ public class Application implements InitializingBean {
 			return;
 		}
 
-		AboutObj aboutObj = new AboutObj(bus);
+		aboutObj = new AboutObj(bus);
 		status = aboutObj.announce(contactPort.value, aboutDataListener);
 
 		if (status != Status.OK) {
 			System.out.println("Announce failed " + status.toString());
 			return;
 		}
+		
+		System.out.println("Announce successful");
 
 		for (;;) {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				System.exit(-1);
 			}
 		}
 
+		
 	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
+	
 }
