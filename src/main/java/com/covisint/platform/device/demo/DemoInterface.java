@@ -2,6 +2,8 @@ package com.covisint.platform.device.demo;
 
 import org.alljoyn.bus.BusException;
 import org.alljoyn.bus.BusObject;
+import org.alljoyn.bus.annotation.BusAnnotation;
+import org.alljoyn.bus.annotation.BusAnnotations;
 import org.alljoyn.bus.annotation.BusInterface;
 import org.alljoyn.bus.annotation.BusMethod;
 import org.alljoyn.bus.annotation.BusProperty;
@@ -20,6 +22,7 @@ public interface DemoInterface extends BusObject {
 	String getLedColor() throws BusException;
 
 	@BusMethod
+	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "targetTemp") })
 	void setTargetTemp(double targetTemp) throws BusException;
 
 	@BusMethod
@@ -29,9 +32,11 @@ public interface DemoInterface extends BusObject {
 	void turnOffBuzzer() throws BusException;
 
 	@BusSignal
-	void internalTempChanged(double temp) throws BusException;
+	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newTemp") })
+	double internalTempChanged(double newTemp) throws BusException;
 
 	@BusSignal
+	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newColor") })
 	String ledColorChanged(String newColor) throws BusException;
 
 }
