@@ -22,7 +22,6 @@ public class InternalState {
 			this.b = b;
 		}
 		
-		@Override
 		public String toString() {
 			return Integer.toHexString(r) + "," + Integer.toHexString(g) + "," + Integer.toHexString(b);
 		}

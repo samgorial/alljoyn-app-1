@@ -108,7 +108,7 @@ public class DemoService implements DemoInterface, InitializingBean {
 		if (!state.ledColor.toString().equals(newColor.toString())) {
 			try {
 				System.out.println("Led color changing from " + state.ledColor + " to " + newColor);
-				ledColorChanged(state.ledColor.toString());
+				ledColorChanged();
 			} catch (BusException e) {
 				e.printStackTrace();
 			}
@@ -118,24 +118,25 @@ public class DemoService implements DemoInterface, InitializingBean {
 		state.ledColor = newColor;
 	}
 
-	public double internalTempChanged(double temp) throws BusException {
-		System.out.println("Internal temperature changed to " + temp);
+	public double internalTempChanged() throws BusException {
+		System.out.println("Internal temperature changed to " + state.temperature);
 		List<SignalEmitter> emitters = Application.SIGNAL_EMITTERS.get(this);
 		if (emitters != null) {
 			for (SignalEmitter emitter : emitters) {
-				emitter.getInterface(DemoInterface.class).internalTempChanged(temp);
+				emitter.getInterface(DemoInterface.class).internalTempChanged();
 				System.out.println("Emitted signal 'internalTempChanged'");
 			}
 		}
-		return temp;
+		return state.temperature;
 	}
 
-	public String ledColorChanged(String newColor) throws BusException {
+	public String ledColorChanged() throws BusException {
+		String newColor = state.ledColor.toString();
 		System.out.println("Led color changed: " + newColor);
 		List<SignalEmitter> emitters = Application.SIGNAL_EMITTERS.get(this);
 		if (emitters != null) {
 			for (SignalEmitter emitter : emitters) {
-				emitter.getInterface(DemoInterface.class).ledColorChanged(newColor);
+				emitter.getInterface(DemoInterface.class).ledColorChanged();
 				System.out.println("Emitted signal 'ledColorChanged'");
 			}
 		}
@@ -186,7 +187,7 @@ public class DemoService implements DemoInterface, InitializingBean {
 		}
 
 		state.temperature = targetTemp;
-		internalTempChanged(targetTemp);
+		internalTempChanged();
 	}
 
 	public void turnOffBuzzer() throws BusException {

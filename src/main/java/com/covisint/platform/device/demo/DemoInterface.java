@@ -21,7 +21,7 @@ public interface DemoInterface extends BusObject {
 	@BusProperty
 	String getLedColor() throws BusException;
 
-	@BusMethod
+	@BusMethod(signature = "d")
 	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "targetTemp") })
 	void setTargetTemp(double targetTemp) throws BusException;
 
@@ -33,10 +33,10 @@ public interface DemoInterface extends BusObject {
 
 	@BusSignal
 	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newTemp") })
-	double internalTempChanged(double newTemp) throws BusException;
+	double internalTempChanged() throws BusException;
 
 	@BusSignal
 	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newColor") })
-	String ledColorChanged(String newColor) throws BusException;
+	String ledColorChanged() throws BusException;
 
 }
