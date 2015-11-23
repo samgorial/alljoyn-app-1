@@ -33,10 +33,10 @@ public interface DemoInterface extends BusObject {
 
 	@BusSignal
 	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newTemp") })
-	double internalTempChanged() throws BusException;
+	void internalTempChanged(double newTemp) throws BusException;
 
 	@BusSignal
 	@BusAnnotations({ @BusAnnotation(name = "arg0", value = "newColor") })
-	String ledColorChanged() throws BusException;
+	void ledColorChanged(String newColor) throws BusException;
 
 }

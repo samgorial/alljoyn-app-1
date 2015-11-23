@@ -108,7 +108,7 @@ public class DemoService implements DemoInterface, InitializingBean {
 		if (!state.ledColor.toString().equals(newColor.toString())) {
 			try {
 				System.out.println("Led color changing from " + state.ledColor + " to " + newColor);
-				ledColorChanged();
+				ledColorChanged(newColor.toString());
 			} catch (BusException e) {
 				e.printStackTrace();
 			}
@@ -118,29 +118,26 @@ public class DemoService implements DemoInterface, InitializingBean {
 		state.ledColor = newColor;
 	}
 
-	public double internalTempChanged() throws BusException {
+	public void internalTempChanged(double newTemp) throws BusException {
 		System.out.println("Internal temperature changed to " + state.temperature);
 		List<SignalEmitter> emitters = Application.SIGNAL_EMITTERS.get(this);
 		if (emitters != null) {
 			for (SignalEmitter emitter : emitters) {
-				emitter.getInterface(DemoInterface.class).internalTempChanged();
+				emitter.getInterface(DemoInterface.class).internalTempChanged(state.temperature);
 				System.out.println("Emitted signal 'internalTempChanged'");
 			}
 		}
-		return state.temperature;
 	}
 
-	public String ledColorChanged() throws BusException {
-		String newColor = state.ledColor.toString();
+	public void ledColorChanged(String newColor) throws BusException {
 		System.out.println("Led color changed: " + newColor);
 		List<SignalEmitter> emitters = Application.SIGNAL_EMITTERS.get(this);
 		if (emitters != null) {
 			for (SignalEmitter emitter : emitters) {
-				emitter.getInterface(DemoInterface.class).ledColorChanged();
+				emitter.getInterface(DemoInterface.class).ledColorChanged(newColor);
 				System.out.println("Emitted signal 'ledColorChanged'");
 			}
 		}
-		return newColor;
 	}
 
 	public double getInternalTemp() throws BusException {
@@ -187,7 +184,7 @@ public class DemoService implements DemoInterface, InitializingBean {
 		}
 
 		state.temperature = targetTemp;
-		internalTempChanged();
+		internalTempChanged(targetTemp);
 	}
 
 	public void turnOffBuzzer() throws BusException {
