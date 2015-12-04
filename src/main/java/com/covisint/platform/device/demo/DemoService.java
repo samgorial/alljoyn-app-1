@@ -34,8 +34,8 @@ public class DemoService implements DemoInterface, InitializingBean {
 			for (;;) {
 
 				try {
-					System.out.println("Timer task sleeping for 5 seconds...");
-					Thread.sleep(5000);
+					System.out.println("Timer task sleeping...");
+					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -46,8 +46,16 @@ public class DemoService implements DemoInterface, InitializingBean {
 				}
 
 				if (state.temperature < 100) {
-					System.out.println("Temp < 100, increasing by 1...");
-					state.temperature += 1;
+					
+					System.out.println("Temp < 100, increasing...");
+					
+					state.temperature = Math.min(state.temperature + 0.05, 100);
+					
+					try {
+						internalTempChanged(state.temperature);
+					} catch (BusException e) {
+						e.printStackTrace();
+					}
 				} else {
 					System.out.println("Max temp reached, not increasing.");
 				}
@@ -166,10 +174,10 @@ public class DemoService implements DemoInterface, InitializingBean {
 
 			while (targetTemp < state.temperature) {
 
-				state.temperature -= 1;
+				state.temperature -= 0.3;
 
 				try {
-					Thread.sleep(500);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
